@@ -1,0 +1,82 @@
+name: main workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    environment: development
+    outputs:
+      backend-changes: ${{ steps.changes.outputs.backend-changes }}
+      frontend-changes: ${{ steps.changes.outputs.frontend-changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: dorny/paths-filter@v2
+        name: Check changes
+        id: changes
+        with:
+          filters: |
+            backend-changes:
+              - 'app/backend/**'
+            frontend-changes:
+              - 'app/frontend/**'
+
+  build-backend:
+    needs: check-changes
+    if: ${{ needs.check-changes.outputs.backend-changes == 'true' }}
+    name: Build backend
+    runs-on: ubuntu-latest
+    environment: development
+    defaults:
+      run:
+        working-directory: ./app/backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      
+      - name: Test
+        run: python manage.py test backend
+
+      - name: Lint
+        run: python -m flake8
+        continue-on-error: true
+
+  build-frontend:
+    needs: check-changes
+    if: ${{ needs.check-changes.outputs.frontend-changes == 'true' }}
+    name: Build frontend
+    runs-on: ubuntu-latest
+    environment: development
+    defaults:
+      run:
+        working-directory: ./app/frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'v20.10.0'
+      
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+      
+      - name: Test
+        run: npm test
