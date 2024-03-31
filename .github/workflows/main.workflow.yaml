@@ -22,9 +22,9 @@ jobs:
         with:
           filters: |
             backend-changes:
-              - 'app/backend/**'
+              - 'backend/**'
             frontend-changes:
-              - 'app/frontend/**'
+              - 'frontend/**'
 
   build-backend:
     needs: check-changes
@@ -34,7 +34,7 @@ jobs:
     environment: development
     defaults:
       run:
-        working-directory: ./app/backend
+        working-directory: ./backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
     environment: development
     defaults:
       run:
-        working-directory: ./app/frontend
+        working-directory: ./frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
